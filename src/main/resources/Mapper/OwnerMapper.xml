@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yc.property.Dao.OwnerDao">
+    <select id="getValueByRoomId" resultType="com.yc.property.vo.OwnerVo">
+        select building_id,address from room where room.id=#{roomId}
+    </select>
+    <select id="getRoomIdByBuildingIdAndAddress" resultType="int">
+        select id from room where building_id=#{buildingId} and address=#{address}
+    </select>
+
+
+    <select id="getOwnerById" resultType="com.yc.property.Bean.Owner">
+        select * from owner where phone=#{phone}
+    </select>
+    <select id="getOwnerByPhone" resultType="com.yc.property.Bean.Owner">
+        select * from owner where phone=#{phone}
+    </select>
+    <insert id="regeisterOwner">
+        insert into owner(phone,password) values (#{phone},#{pwd})
+    </insert>
+    <select id="ifPasswordTrue" resultType="com.yc.property.Bean.Owner">
+        select * from owner where card_id=#{cardId} and password=#{password}
+    </select>
+
+    <update id="reSetPassword">
+        update owner set password=#{password} where phone=#{phone}
+    </update>
+
+    <update id="updateOwnerMessage">
+        update owner set password=#{password},room_id=#{roomId},name=#{name},sex=#{sex},mail=#{mail},card_id=#{cardId} where phone=#{phone}
+    </update>
+
+    <select id="findOldOrderByPhone" resultType="com.yc.property.vo.OrderVo">
+        select * from order_detail where order_id in (select id from property.`order` where owner_id=#{phone}) ORDER BY create_time desc
+    </select>
+
+    <update id="updateOwnerStatus">
+        update owner set status=#{status} where phone=#{phone}
+    </update>
+
+    <select id="getOwnerByRoomId" resultType="com.yc.property.Bean.Owner">
+        select * from owner where room_id=#{roomId} and status!=0
+    </select>
+</mapper>

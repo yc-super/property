@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yc.property.Dao.AdminDao">
+    <select id="adminLogin" resultType="com.yc.property.Bean.Admin">
+        select * from admin where id=#{id} and password=#{password}
+    </select>
+
+    <select id="getOwnerCount" resultType="int">
+        select count(*) from owner
+        <where>
+            <if test="name!=null and name!=''">and name like concat('%',#{name},'%')</if>
+            <if test="phone!=null and phone!=''">and phone=#{phone}</if>
+            <if test="buildingId!=null and buildingId!=0">and room_id in (select id from room where building_id=#{buildingId})</if>
+        </where>
+    </select>
+
+    <select id="getPagingOwnerList" resultType="com.yc.property.Bean.Owner">
+        select * from owner
+        <where>
+            <if test="name!=null and name!=''">and name like concat('%',#{name},'%')</if>
+            <if test="phone!=null and phone!=''">and phone=#{phone}</if>
+            <if test="buildingId!=null and buildingId!=0">and room_id in (select id from room where building_id=#{buildingId})</if>
+        </where>
+        limit #{nowPage},#{pageSize}
+    </select>
+
+    <select id="getAllBuilding" resultType="java.lang.Integer">
+        select distinct (building_id) from room
+    </select>
+
+
+
+    <insert id="addOwner" parameterType="com.yc.property.Bean.Owner">
+        insert into owner (card_id, name, phone, sex, password, room_id, status)
+        values(#{ownerVo.cardId},#{ownerVo.name},#{ownerVo.phone},#{ownerVo.sex},#{ownerVo.password},#{ownerVo.roomId},#{status})
+    </insert>
+
+    <update id="deleteOwners">
+        update owner set status=0 where phone in
+        <foreach collection="array" item="phone" open="(" close=")" separator=",">
+            #{phone}
+        </foreach>
+    </update>
+
+    <update id="updateOwners">
+        update owner set sex=#{sex},password=#{password},room_id=#{roomId},status=#{status} where phone=#{phone}
+    </update>
+
+    <select id="getWorkerCount" resultType="int">
+        select count(*) from worker
+        <where>
+            <if test="name!=null and name!=''">and name like concat('%',#{name},'%')</if>
+            <if test="phone!=null and phone!=''">and phone=#{phone}</if>
+        </where>
+    </select>
+
+    <select id="getPagingWorkerList" resultType="com.yc.property.Bean.Worker">
+        select * from worker
+        <where>
+            <if test="name!=null and name!=''">and name like concat('%',#{name},'%')</if>
+            <if test="phone!=null and phone!=''">and phone=#{phone}</if>
+        </where>
+        limit #{nowPage},#{pageSize}
+    </select>
+
+    <insert id="addWorker" parameterType="com.yc.property.Bean.Worker">
+        insert into worker (card_id, name, phone, sex, password, status)
+        values(#{workerVo.cardId},#{workerVo.name},#{workerVo.phone},#{workerVo.sex},#{workerVo.password},#{status})
+    </insert>
+
+    <update id="deleteWorkers">
+        update worker set status=0 where phone in
+        <foreach collection="array" item="phone" open="(" close=")" separator=",">
+            #{phone}
+        </foreach>
+    </update>
+
+    <update id="updateWorkers">
+        update worker set sex=#{sex},password=#{password},status=#{status} where phone=#{phone}
+    </update>
+
+
+
+    <select id="getAllWorkerName" resultType="String">
+        select name from worker
+    </select>
+
+    <select id="getOrderCount" resultType="int">
+        select count(*) from `order`
+        <where>
+            <if test="orderId!=null and orderId!=''">and `order`.id=#{orderId}</if>
+            <if test="workerName!=null and workerName!=''">and workerPhone=(select phone from worker where name=#{workerName}) </if>
+            <if test="ownerName!=null and ownerName!=''">and ownerName=(select phone from owner where name=#{ownerName})</if>
+            <if test="status!=null and status!=-2">and status=#{status}</if>
+        </where>
+    </select>
+
+    <select id="getPagingOrderList" resultType="com.yc.property.vo.OrderVo">
+        select `order`.id as orderId,owner_id,worker_id,type_id ,remarks,asess,if_asess,img_id,create_time,start_time,end_time,`order`.status
+        from `order`,order_detail
+        <where>
+            <if test="1==1">and `order`.id=order_detail.order_id </if>
+            <if test="orderId!=null and orderId!=''">and `order`.id=#{orderId}</if>
+            <if test="workerName!=null and workerName!=''">and worker_id=(select phone from worker where name=#{workerName}) </if>
+            <if test="ownerName!=null and ownerName!=''">and owner_id=(select phone from owner where name=#{ownerName})</if>
+            <if test="status!=null and status!=-2">and status=#{status}</if>
+        </where>
+        limit #{nowPage},#{pageSize}
+    </select>
+
+    <delete id="deleteOrders">
+        delete from `order` where id in
+        <foreach collection="array" item="orderId" open="(" close=")" separator=",">
+            #{orderId}
+        </foreach>
+    </delete>
+
+    <select id="getAllType" resultType="java.util.HashMap">
+        select id as value,value as label from type
+    </select>
+
+    <update id="updateOrder1">
+        update order_detail set type_id=#{typeId},remarks=#{remarks},asess=#{asess},if_asess=#{ifAsess} where order_id=#{orderId}
+    </update>
+    <update id="updateOrder2">
+        update `order` set status=#{status} where id=#{orderId}
+    </update>
+
+
+    <select id="isTypeExits" resultType="String">
+        select value from type where value=#{typeName}
+    </select>
+    <insert id="addType">
+        insert into type (value)values(#{typeName})
+    </insert>
+    <select id="getTypeCount" resultType="int">
+        select count(*) from type
+    </select>
+    <select id="getPagingTypeList" resultType="com.yc.property.Bean.Type">
+        select * from type limit #{nowPage},#{pageSize}
+    </select>
+    <delete id="deleteTypes">
+    delete from type where id in
+    <foreach collection="array" item="typeId" open="(" close=")" separator=",">
+        #{typeId}
+    </foreach>
+</delete>
+    <select id="getAdminByPwd" resultType="com.yc.property.Bean.Admin">
+        select * from admin where password=#{pwd}
+    </select>
+
+    <update id="updatePwd">
+        update admin set password=#{pwd}
+    </update>
+
+
+
+
+
+
+
+
+
+
+
+    <select id="getAllFeedBack" resultType="com.yc.property.Bean.feedBack">
+        select * from feedback
+    </select>
+
+    <update id="backFeedBackByWorkId">
+        update feedback set back_value=#{backValue} where id=#{id}
+    </update>
+
+    <select id="isAdminExist" resultType="com.yc.property.Bean.Admin">
+        select * from admin where id=#{id}
+    </select>
+</mapper>

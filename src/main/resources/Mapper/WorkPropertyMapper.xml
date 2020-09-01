@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yc.property.Dao.WorkPropertyDao">
+    <select id="getOrderList" resultType="com.yc.property.vo.OrderVo">
+        select * from order_detail where order_id in (select id from property.`order` where worker_id=#{workerPhone}) order by create_time desc
+    </select>
+    <select id="getUnfinishedOrderByWorkerPhone" resultType="com.yc.property.vo.OrderVo">
+        select * from order_detail where order_id in (select id from property.`order` where worker_id=#{workerPhone} and status="0") order by (case when start_time is not null then 0 else 1 end),priority desc,create_time asc
+    </select>
+    <select id="getFinishedOrderByWorkerPhone" resultType="com.yc.property.vo.OrderVo">
+        select * from order_detail where order_id in (select id from property.`order` where worker_id=#{workerPhone} and status="1") order by end_time desc
+    </select>
+    <select id="getCancelOrderByWorkerPhone" resultType="com.yc.property.vo.OrderVo">
+        select * from order_detail where order_id in (select id from property.`order` where worker_id=#{workerPhone} and status="-1") order by end_time desc
+    </select>
+    <select id="getOrderDetailByOrderId" resultType="com.yc.property.vo.OrderVo">
+        select * from order_detail where order_id=#{orderId}
+    </select>
+    <select id="getOrderByBuildingIdAndWorkerPhone" resultType="com.yc.property.vo.OrderVo">
+        select * from order_detail where order_id in (select id from property.`order` where worker_id=#{workerPhone}
+        and owner_id in(select phone from `owner` where room_id in (select id from room where building_id=#{buildingId})))
+    </select>
+    <select id="getOrderByOwnerNameAndWorkerPhone" resultType="com.yc.property.vo.OrderVo">
+        select * from order_detail where order_id in (select id from property.`order` where worker_id=#{workerPhone}
+        and owner_id in(select phone from `owner` where name like #{ownerName}))
+    </select>
+
+    <select id="getWorkerByOrderId" resultType="com.yc.property.Bean.Worker">
+        select * from worker where phone=(select worker_id from property.`order` where id=#{orderId})
+    </select>
+    <select id="getOwnerByOrderId" resultType="com.yc.property.Bean.Owner">
+        select * from owner where phone=(select owner_id from property.`order` where id=#{orderId})
+    </select>
+    <select id="getStatusByOrderId" resultType="int">
+        select status from property.`order` where id=#{orderId}
+    </select>
+    <select id="getTypeNameByTypeId" resultType="String">
+        select `type`.value from `type` where id=#{typeId}
+    </select>
+    <insert id="feedBack">
+        insert into feedback(worker_id,feedback.`value`)values(#{cardId},#{feedBack})
+    </insert>
+
+    <select id="isOrderExistByOrderIdAndWorkerPhone" resultType="com.yc.property.vo.OrderVo">
+        select * from property.`order` where id=#{orderId} and worker_id=#{workerPhone}
+    </select>
+</mapper>

@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yc.property.Dao.ApplyPropertyDao">
+    <select id="getAllType" resultType="com.yc.property.Bean.Type">
+        select * from type
+    </select>
+
+    <select id="getAllWorker" resultType="com.yc.property.Bean.Worker">
+        select * from worker
+    </select>
+
+    <select id="getWorkerUnfinishedOrderNum" resultType="int">
+        select count(*) from `order` where worker_id=#{workerPhone} and status=0
+    </select>
+
+    <select id="getOwnerUnfinishedOrderNum" resultType="int">
+        select count(*) from `order` where owner_id=#{ownerPhone} and status=0
+    </select>
+
+    <select id="getQueueNum" resultType="int">
+        select count(*) from
+        (select order_detail.id,priority,order_id,type_id,create_time,owner_id as ownerPhone,worker_id as workerPhone,`order`.`status` from order_detail,`order` where order_detail.order_id=`order`.id and `order`.worker_id=#{workerPhone} and `status`=0)t
+        where ((t.create_time &lt; (select create_time from order_detail where order_id=#{orderId}) and t.priority = (select priority from order_detail where order_id=#{orderId}))
+        or t.priority > (select priority from order_detail where order_id=#{orderId}))
+    </select>
+    <select id="getOrderByOrderIdAndStartTime" resultType="com.yc.property.Bean.Order">
+        select * from order_detail where order_id =#{orderId} and start_time is not null
+    </select>
+
+    <select id="getUnfinishedTypes" resultMap="selectMap">
+        select t.type_id as typeId,count(*) as num from
+        (select order_detail.id,create_time,start_time,priority,order_id,type_id from order_detail,`order` where order_detail.order_id=`order`.id and `order`.worker_id=#{workerPhone}  and `status`=0)t
+        where (t.create_time &lt; (select create_time from order_detail where order_id=#{orderId}) and t.priority = (select priority from order_detail where order_id=#{orderId}))
+        or t.priority &gt; (select priority from order_detail where order_id=#{orderId}) or t.start_time is not null
+        GROUP BY t.type_id
+    </select>
+    <select id="getUnfinishedTypes2" resultMap="selectMap">
+        select t.type_id as typeId,count(*) as num from
+        (select order_detail.id,create_time,type_id from order_detail,`order` where order_detail.order_id=`order`.id and `order`.worker_id=#{workerPhone}  and `status`=0)t
+        where t.create_time &lt; now()
+        GROUP BY t.type_id
+    </select>
+    <resultMap id="selectMap" type="com.yc.property.vo.TypeAndNum">
+        <id column="typeId" property="typeId" javaType="java.lang.Integer"></id>
+        <result column="num" property="num" javaType="java.lang.Integer"></result>
+    </resultMap>
+
+    <insert id="createOrder">
+        insert into property.`order`(id,owner_id, worker_id) values(#{orderId},#{ownerPhone},#{workerPhone})
+    </insert>
+
+
+    <insert id="createOrderDetail">
+        insert into order_detail(order_id,type_id,remarks,create_time) values(#{orderId},#{typeId},#{remarks},now())
+    </insert>
+
+    <select id="getOrderByOrderId" resultType="com.yc.property.Bean.Order">
+        select * from property.`order` where id=#{orderId}
+    </select>
+
+    <select id="getOrderDetailByOrderId2" resultType="com.yc.property.vo.OrderVo">
+        select * from order_detail where order_id=#{orderId}
+    </select>
+
+    <update id="startProperty">
+        update order_detail set start_time=#{date}where order_id=#{orderId}
+    </update>
+
+    <update id="endProperty">
+        update order_detail set end_time=#{date} where order_id=#{orderId}
+    </update>
+
+    <select id="getTypenameByTypeid" resultType="String">
+        select `type`.value from `type` where id=#{typeId}
+    </select>
+
+    <select id="getNewestPropertyOrderId" resultType="String">
+      select MAX(`order`.id) from `order` where owner_id=#{ownerPhone}
+    </select>
+
+    <update id="setStatus">
+        update `order` set status=#{status} where id=#{orderId}
+    </update>
+
+
+
+    <select id="getUnfinishedOrderByOwnerPhone" resultType="com.yc.property.vo.OrderVo">
+        select * from order_detail where order_id in (select id from property.`order` where owner_id=#{ownerPhone} and status="0")
+    </select>
+    <select id="getNoAsessOrderByOwnerPhone" resultType="com.yc.property.vo.OrderVo">
+        select * from order_detail where order_id in (select id from property.`order` where owner_id=#{ownerPhone})and if_asess=0
+    </select>
+    <select id="getFinishedOrderByOwnerPhone" resultType="com.yc.property.vo.OrderVo">
+        select * from order_detail where order_id in (select id from property.`order` where owner_id=#{ownerPhone} and status="1")
+    </select>
+    <select id="getCancelOrderByOwnerPhone" resultType="com.yc.property.vo.OrderVo">
+        select * from order_detail where order_id in (select id from property.`order` where owner_id=#{ownerPhone} and status="-1")
+    </select>
+    <select id="getOrderByOwnerPhoneAndWorkerPhone" resultType="com.yc.property.vo.OrderVo">
+        select * from order_detail where order_id in (select id from property.`order` where worker_id=(select phone from worker where name=#{workerName})
+        and owner_id =#{ownerPhone})
+    </select>
+    <select id="isOrderExistByOrderIdAndOwnerPhone" resultType="com.yc.property.vo.OrderVo">
+        select * from property.`order` where id=#{orderId} and owner_id=#{ownerPhone}
+    </select>
+
+
+    <select id="getApplyNumByOwnerPhone" resultType="int">
+        select count(*) from order_detail
+        where create_time >= date(now())
+        and create_time &lt; DATE_ADD(date(now()),INTERVAL 1 DAY)
+        and order_id in(select id from property.`order` where owner_id=#{ownerPhone})
+    </select>
+
+    <select id="getTimesByTypeId" resultType="java.lang.Integer">
+        select (UNIX_TIMESTAMP(end_time)-UNIX_TIMESTAMP(start_time))as times  from
+        (select * from order_detail where order_detail.order_id in (select property.`order`.id from property.`order` where status=1 and worker_id=#{workerPhone}) and type_id=#{typeId}) as b
+        ORDER BY times desc
+    </select>
+
+    <select id="getMaxPriorityByWorkerPhone" resultType="int">
+        select max(priority) from order_detail where order_id in(
+        select id from property.`order` where worker_id=#{workerPhone} and status=0
+        )
+    </select>
+
+    <update id="setMaxPriorityByOrderId">
+        update order_detail set priority=#{maxPriority} where order_id=#{orderId}
+    </update>
+
+    <update id="setPingjiaByOrderId">
+        update order_detail set asess=#{asess},if_asess=1 where order_id=#{orderId}
+    </update>
+
+    <select id="getAvgAsessByWorkerPhone" resultType="String">
+        select ROUND(AVG(asess),2) from order_detail where order_id in (select `order`.id from `order` where worker_id=#{workerPhone})
+    </select>
+
+    <select id="getMaxOrderId" resultType="String">
+        select max(`order`.id) from `order`
+    </select>
+
+    <select id="getOrderIdByNoOwnerImg" resultType="String">
+        select order_id from order_detail where order_id in(select id from `order` where owner_id=#{phone}) and img_id is null
+    </select>
+
+    <select id="getImgNumByImgId" resultType="int">
+        select count(*) from image where id=#{id}
+    </select>
+    <insert id="savePicture">
+        insert into image values (#{id},#{path})
+    </insert>
+    <update id="updateImg">
+        update image set value=#{path} where id=#{id}
+    </update>
+
+    <update id="setImgIdByOrderId">
+        update order_detail set img_id=#{imgId} where order_id=#{orderId}
+    </update>
+
+    <select id="getImgPathByImgId" resultType="String">
+        select image.value from image where id=#{imgId}
+    </select>
+</mapper>

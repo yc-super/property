@@ -1,0 +1,30 @@
+server:
+  port: 4000
+  servlet:
+    context-path: /
+  tomcat:
+    max-threads: 1000
+spring:
+  datasource:
+    name: property
+    url: jdbc:mysql://localhost:3306/property?serverTimezone=GMT&&characterEncoding=utf8&&useUnicode=true
+    username: root
+    password: root123
+    driver-class-name: com.mysql.jdbc.Driver
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML5
+  mvc:
+    static-path-pattern: /**
+    favicon: enabled=false
+  resources:
+    static-locations: classpath:/static,classpath:/public,classpath:/resources,classpath:/META-INF/resources
+mybatis:
+  configuration:
+    default-statement-timeout: 30
+    map-underscore-to-camel-case: true
+  mapper-locations: classpath:/Mapper/*.xml
+  type-aliases-package: com.example.firstspringboot.Bean
+
+

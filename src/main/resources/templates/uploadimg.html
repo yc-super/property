@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>上传图片测试</title>
+</head>
+<body>
+    <h1>上传图片测试</h1>
+    上传图片<input type="file"  id="uploadimg">
+<script src="./js/jquery-1.11.3.min.js"></script>
+<script>
+    var uploadimg=document.getElementById("uploadimg");
+    $("#uploadimg").on("change",function(){
+        alert("进入ajax");
+        var file=new FormData();
+        file.append("file",$("#uploadimg")[0].files[0]);
+        $.ajax({
+            url:"/WorkProperty/uploadPicture",
+            type:"post",
+            data:file,
+            processData:false,
+            contentType:false,
+            success:function (result) {
+                console.log(result);
+            }
+        });
+    })
+</script>
+</body>
+</html>
